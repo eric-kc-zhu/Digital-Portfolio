@@ -45,6 +45,10 @@
                              (body font-size × line-height). Its rail label matches it so the
                              header centers on the taller reading line, not the --first-line one. */
 
+  --block-gap: 6rem;   /* air between blocks on the spine. The homepage needs this
+                          much, because each of its sections is a whole list. A detail
+                          page overrides it below — see .wrap--detail. */
+
   --link-space: 1.2rem;  /* total gap before an inline "↗" link — the space between a
                             title/name and its link, shared by projects AND
                             extracurriculars. Change it here to move both at once. */
@@ -86,6 +90,7 @@ body {
 p { margin: 0 0 1.1rem; }
 p:last-child { margin-bottom: 0; }
 ul, ol { margin: 0; padding: 0; }
+strong { font-weight: 600; }   /* matches the page's heading weight, not the font's heavier default */
 
 a { color: inherit; }
 a:focus-visible,
@@ -120,7 +125,7 @@ a:focus-visible,
   display: grid;
   grid-template-columns: var(--rail) minmax(0, var(--measure));
   column-gap: var(--gutter);
-  margin-bottom: 6rem;
+  margin-bottom: var(--block-gap);
 }
 .block:last-child { margin-bottom: 0; }
 .block > .rail { grid-column: 1; position: relative; text-align: right; }
@@ -484,6 +489,11 @@ a:focus-visible,
    PROJECT PAGE — same spine, so every project reads identically:
    context / my role / what i did / what came of it / links, labels in the margin.
    ========================================================================= */
+/* a detail page's sections are one short read each — context, what i did, links —
+   so they sit closer together and read as one column, rather than drifting apart the
+   way the homepage's lists need to. One variable, so the whole page moves at once. */
+.wrap--detail { --block-gap: 3rem; }
+
 .title-row { display: flex; align-items: center; gap: 0 .55rem; }
 .title-row .mark { min-width: 1.45rem; height: 1.45rem; font-size: .68rem; }
 .title-row .mark--svg { width: 1.45rem; height: 1.45rem; }
@@ -501,7 +511,9 @@ a:focus-visible,
    prose. The image is centered and its width is set inline per-entry (figure.width
    in the CONTENT block); it never overflows the measure. The caption below is
    italic, smaller, lighter, and centered. */
-.figure { margin: 1.9rem 0 -2.5rem; text-align: center; }   /* negative bottom trims the gap to the prose below */
+/* no bottom margin: the gap down to the first section is then exactly --block-gap,
+   the same air that sits between every other pair of sections on the page. */
+.figure { margin: 1.9rem 0 -1.3rem; text-align: center; }
 .figure-img {
   display: block;
   margin: 0 auto;
@@ -647,6 +659,22 @@ a:focus-visible,
 .code .code-loading { color: var(--ink-faint); }
 .code .code-err     { color: var(--ink-faint); white-space: pre-wrap; }
 
+/* an INLINE code term — `requests`, `--dry-run`, `results.csv`. The same
+   monospace and paper-2 wash as the slab above, shrunk to sit inside a
+   sentence: sized in em so it tracks whatever text surrounds it, and kept on
+   one line so a library name never breaks across a line ending. */
+.term {
+  font-family: var(--mono);
+  font-size: .83em;
+  padding: .08em .3em;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--paper-2);
+  color: var(--tok-fn);
+  white-space: nowrap;
+}
+a .term { color: inherit; border-color: var(--accent-dim); }
+
 /* ============================================================================
    LINK STUBS — a link with href: null renders as a dotted, greyed stub, so a
    dead URL never ships by accident.
@@ -762,14 +790,20 @@ const WORK = [
       caption: "earnings preview; numbers changed for proprietary reasons",
       width: "100%"
     },
-    role: "Analyst",
-    did: "still doing it! check back later",
+    role: "Analyst for SMID-cap biotech and large-cap pharma. Covered spaces include IgAN, PAH/PH-ILD (prostacyclins, treprostinil), T2D/obesity (incretins), and ATTR-CM.",
+    did: [
+      [
+        "**Revenue Builds:** Pulled TRx and NBRx data from IQVIA, Symphony, Earnest, and Kyber, backed out implied price panel by panel, then grossed up by a capture rate calibrated on reported quarters. Gross-to-net and patient persistence considerations on top of that yielded quarterly net product revenue estimates at low, mid, and high cases.",
+        "**Financial Modeling:** Built three-statement models with NOL schedules and share-count rollforwards, revenue builds by indication/line of therapy, and DCF/SOTP valuations on top of it.",
+        "**Tooling:** I also built tools to streamline the process. I engineered a Python API pipeline to track 13F ownership and position deltas for 40+ biotech hedge funds. Additionally, I developed an HTML/JS tool to convert prescription data into preliminary, calibrated revenue projections."
+      ]
+    ],
   },
   {
     slug: "berkeley-economics",
     title: "UC Berkeley Economics",
     icon: { img: "icons/Berkeley.png" },
-    blurb: "Using NLPs to analyze the effect of private equity on California care facilities",
+    blurb: "Using NLP to analyze the effect of private equity on California care facilities",
     subjects: [ "economics", "cs" ],
     tags: [ { role: "research assistant", years: "2026—" } ],
     figure: {
@@ -777,10 +811,17 @@ const WORK = [
       caption: "results.csv",
       width: "95%"
     },
-    context: "",
+    context: "My team at UC Berkeley researched the quality of California care facilities in relation to private equity acquisitions. To measure \"quality of care,\" we looked to state regulatory and inspection reports. The bottleneck, however, was hundreds of thousands of unstructured, qualitative files.",
     role: "",
     did: [
-      "Coded an NLP program in Python to parse through hundreds of thousands of care facility reports and classify detected offenses by severity. Project is still in progress!",
+      "I engineered an end-to-end Python data pipeline that fetched, parsed, and classified facility reports at scale.",
+      [
+        "**Data Ingestion:** Built an automated web scraper using `requests` and `BeautifulSoup` to pull raw HTML reports from the California Department of Social Services (CCLD). Included implemented rate-limiting, error handling, and batch-writing to ensure it could run smoothly over hundreds of thousands of records.",
+        "**Data Extraction:** Used Regular Expressions (RegEx) to isolate procedural boilerplate from actual deficiency descriptions, and to extract legal citations (e.g., Title 22 CCR, Health & Safety Codes).",
+        "**Zero-Shot Text Classification:** Integrated a Hugging Face transformer model (`facebook/bart-large-mnli`) to run inline zero-shot classification. Evaluated narratives directly against custom regulatory severity categories.",
+        "**Negation-Aware Heuristics:** Coded a secondary keyword-scoring algorithm that utilized a \"negation window\" to flag severe vocabulary while avoiding false positives.",
+        "**Scale:** It runs unattended on hundreds of thousands of files, recovers from a failure mid-batch, and writes incrementally, so the team can direct it at the full CCLD database and leave it."
+      ],
       { codeFile: "files/nlp.py", lang: "python pseudocode" }
     ],
   },
@@ -813,10 +854,11 @@ const WORK = [
       "At the England Lab, I screened multiple small-molecule compounds designed to target Nurr1 and induce different gene expression changes, while presenting my findings to the lab each week. In particular, I",
       [
         "Performed qPCR end to end — cell culture, drug treatment, RNA extraction, cDNA synthesis — to characterize gene expression changes in specific dopaminergic and inflammatory pathways.",
-        "SDS-PAGE and western blots to characterize protein bands of interest.",
+        "Ran SDS-PAGE and western blot experiments to characterize protein bands of interest.",
         "Used affinity purification with biotin and biotinylated small molecule drugs to pull down and confirm intracellular drug binding sites."
       ]
     ],
+    outcome: "One of the candidates I tested produced the gene expression changes we were screening for, which made it worth investigating further. Additionally, streptavidin-biotin testing suggested a possibility that the compound was binding HDAC rather than the intended nuclear receptor.",
     links: [ { label: "Research Abstract", href: "files/englandlab.pdf"} ]
   },
   {
@@ -826,7 +868,7 @@ const WORK = [
     blurb: "First time at a wet-lab bench, researching T-cell therapies for solid tumors",
     subjects: [ "biology" ],
     tags: [ { role: "intern", years: "summer 2023" } ],
-    context: "T-cell therapies such as CAR-T have transformed the treatment of blood cancers, but treating T-cell therapies such as CAR-T have transformed the treatment of blood cancers, but solid tumors remain a challenge due to transport.",
+    context: "T-cell therapies such as CAR-T have transformed the treatment of blood cancers, but solid tumors remain a challenge. A solid tumor has a physical structure, which renders it difficult for engineered T-cells to reach and survive inside of. Antibody engineering poses a potential solution.",
     did: [
       "Eureka Therapeutics is where I first gained experience in wet lab research. That summer, I",
       [
@@ -847,7 +889,8 @@ const WORK = [
     tags: [
       { role: "co-founder, project manager", years: "2021" },
     ],
-    did: "During the uncertainty of the pandemic, I partnered with a couple of friends to host an online mathematics competition. As co-founder and project manager, I led a 21-person team to write an online mock AMC 10/12 for over 100 participants. We built the non-profit from the ground up: curating original problems, rigorous test-solving, and securing $4,000 in sponsorships from industry leaders including Maplesoft, Jane Street, and Wolfram. On test day, I oversaw all testing logistics and analyzed submission data for accurate score calculations.",
+    context: "During the uncertainty of the pandemic, many math groups were disrupted and forced online. After meeting like-minded students interested in competition math on Art of Problem Solving, we set out to host a virtual math competition.",
+    did: "As co-founder and project manager, I led a 21-person team to write an online mock AMC 10/12 for over 100 participants. We built the non-profit from the ground up: curating original problems, rigorous test-solving, and securing $4,000 in sponsorships from industry leaders including Maplesoft, Jane Street, and Wolfram. On test day, I oversaw all testing logistics and analyzed submission data for accurate score calculations.",
     links: [ { label: "The Mathimatika² Contest", href: "files/mathimatika.pdf"} ]
   },
 ];
@@ -959,8 +1002,16 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
 /* plain escaped text for attributes (aria-label) — an alias kept for intent. */
 const plain = esc;
 
-/* body text — HTML-escaped. */
-const t = esc;
+/* body text — HTML-escaped, then `backticked spans` become inline code and
+   **doubled asterisks** become bold. Write a library, flag, filename, or
+   identifier between backticks in any content string — blurb, context, did, a
+   list item, a caption — and it renders in the monospace chip (see .term);
+   wrap a lead-in label in ** to set it in bold. Escaping runs FIRST, so the
+   text inside a pair of markers is already safe; a lone, unpaired backtick or
+   asterisk is left alone. */
+const t = s => esc(s)
+  .replace(/`([^`\n]+)`/g, '<code class="term">$1</code>')
+  .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
 
 /* shared code renderer: a small, language-agnostic tokeniser. It escapes the
    source and wraps recognised tokens in coloured spans — keywords, strings,
@@ -1270,7 +1321,7 @@ function detail(sec, slug) {
       '<a class="nxt" href="#/' + sec.route + "/" + esc(next.slug) + '"><span class="nxt-col"><span class="nxt-lead">next</span><span class="nxt-title">' + t(next.title) + '</span></span><span class="nxt-arw">\u2192</span></a>' +
     "</nav>");
 
-  return { title: p.title + " — " + PROFILE.name, html };
+  return { title: p.title + " — " + PROFILE.name, html, cls: "wrap--detail" };
 }
 
 function notFound() {
@@ -1303,6 +1354,10 @@ function resolve() {
 
 function paint() {
   const page = resolve();
+  /* the wrapper class carries the page's spacing (a detail page groups its sections
+     tighter than the homepage). Toggled, not reassigned, so the fade-out's
+     .leaving class survives the swap. */
+  view.classList.toggle("wrap--detail", page.cls === "wrap--detail");
   view.innerHTML = page.html;
   document.title = page.title;
   announce.textContent = page.title;
